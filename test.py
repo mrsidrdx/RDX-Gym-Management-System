@@ -20,7 +20,7 @@ class GymApp(tk.Tk):
         self.frames = {}
 
         # for F in (Login, Menu, AddCustomer, AddPackage, ShowCustomers, ShowPackages, SearchCustomer, AddSubscription, AddPayment):
-        for F in (Login, Menu, AddCustomer, AddPackage, ShowCustomers):
+        for F in (Login, Menu, AddCustomer, AddPackage, ShowCustomers, ShowPackages, SearchCustomer):
 
             frame = F(container, self)
 
@@ -82,8 +82,8 @@ class Menu(tk.Frame):
         b1 = tk.Button(self, text = 'Add Customer', relief='raised', font=("Times", 18), width=20, command=lambda: controller.show_frame(AddCustomer)).pack(pady=4)
         b2 = tk.Button(self, text = 'Add Package', relief='raised', font=("Times", 18), width=20, command=lambda: controller.show_frame(AddPackage)).pack(pady=4)
         b3 = tk.Button(self, text = 'Show All Customers', relief='raised', font=("Times", 18), width=20, command=lambda: controller.show_frame(ShowCustomers)).pack(pady=4)
-        b4 = tk.Button(self, text = 'Show All Packages', relief='raised', font=("Times", 18), width=20, command=lambda: controller.show_frame(Menu)).pack(pady=4)
-        b5 = tk.Button(self, text = 'Search Customer', relief='raised', font=("Times", 18), width=20, command=lambda: controller.show_frame(Menu)).pack(pady=4)
+        b4 = tk.Button(self, text = 'Show All Packages', relief='raised', font=("Times", 18), width=20, command=lambda: controller.show_frame(ShowPackages)).pack(pady=4)
+        b5 = tk.Button(self, text = 'Search Customer', relief='raised', font=("Times", 18), width=20, command=lambda: controller.show_frame(SearchCustomer)).pack(pady=4)
         b6 = tk.Button(self, text = 'Add Subscription', relief='raised', font=("Times", 18), width=20, command=lambda: controller.show_frame(Menu)).pack(pady=4)
         b7 = tk.Button(self, text = 'Add Payment', relief='raised', font=("Times", 18), width=20, command=lambda: controller.show_frame(Menu)).pack(pady=4)
 
@@ -154,27 +154,14 @@ class ShowCustomers(tk.Frame):
         self.controller = controller
         tk.Frame.__init__(self, parent)
         self.configure(bg='#4834DF')
-        label = tk.Label(self, text = 'List of Customers', font=("Helvetica", 30, "italic"), bg='#4834DF').pack(pady=16, padx=10)
-        for i in range(self.countObjects()):
-            self.custID = tk.IntVar(value = '')
-            customerID = tk.Label(self, text = '', font=("Helvetica", 10, "italic"), bg='#4834DF', textvariable = self.custID).pack(padx=3)
-            self.nameVar = tk.StringVar(value = '')
-            name = tk.Label(self, text = '', font=("Helvetica", 10, "italic"), bg='#4834DF', textvariable = self.nameVar).pack(padx=3)
-            self.phone = tk.StringVar(value = '')
-            phoneNo = tk.Label(self, text = '', font=("Helvetica", 10, "italic"), bg='#4834DF', textvariable = self.phone).pack(padx=3)
-            self.date = tk.StringVar(value = '')
-            joiningDate = tk.Label(self, text = '', font=("Helvetica", 10, "italic"), bg='#4834DF', textvariable = self.date).pack(padx=3)
-            self.showCustomers(i)
+        label = tk.Label(self, text = 'List of Customers', font=("Helvetica", 30, "italic"), bg='#4834DF').pack(padx=10)
 
-    def countObjects(self):
-        global conn
-        cur = conn.cursor()
-        query = '''select * from customers'''
-        cur.execute(query)
-        r = cur.fetchall()
-        return len(r)
+        list1 = tk.Listbox(self, height=8, width=160, font=("Times", 28), bd = 6, relief='raised', bg='#1BCA9B', fg='#2C3335')
+        list1.pack(padx=25, pady=8)
+        b2 = tk.Button(self, text = 'Menu', relief='raised', font=("Times", 18), width=10, command=lambda: controller.show_frame(Menu)).pack(pady=8)
+        self.view_command(list1)
 
-    def showCustomers(self, i):
+    def showCustomers(self):
         global conn
         cur = conn.cursor()
         query = '''select * from customers'''
@@ -182,13 +169,52 @@ class ShowCustomers(tk.Frame):
         r = cur.fetchall()
         count = len(r)
         if count > 0:
-            self.custID.set(r[i][0])
-            self.nameVar.set(r[i][1])
-            self.phone.set(r[i][2])
-            self.date.set(r[i][3])
+            return r
         else:
             messagebox.showinfo("List of Customers", "No customer records found.")
 
+    def view_command(self, list1):
+        list1.delete(0,tk.END)
+        for row in self.showCustomers():
+            list1.insert(tk.END,row)
+
+class ShowPackages(tk.Frame):
+
+    def __init__(self, parent, controller):
+        self.controller = controller
+        tk.Frame.__init__(self, parent)
+        self.configure(bg='#4834DF')
+        label = tk.Label(self, text = 'List of Packages', font=("Helvetica", 30, "italic"), bg='#4834DF').pack(padx=10)
+
+        list1 = tk.Listbox(self, height=8, width=160, font=("Times", 28), bd = 6, relief='raised', bg='#1BCA9B', fg='#2C3335')
+        list1.pack(padx=25, pady=8)
+        b2 = tk.Button(self, text = 'Menu', relief='raised', font=("Times", 18), width=10, command=lambda: controller.show_frame(Menu)).pack(pady=8)
+        self.view_command(list1)
+
+    def showPackages(self):
+        global conn
+        cur = conn.cursor()
+        query = '''select * from packages'''
+        cur.execute(query)
+        r = cur.fetchall()
+        count = len(r)
+        if count > 0:
+            return r
+        else:
+            messagebox.showinfo("List of Packages", "No package records found.")
+
+    def view_command(self, list1):
+        list1.delete(0,tk.END)
+        for row in self.showPackages():
+            list1.insert(tk.END,row)
+
+class SearchCustomer(tk.Frame):
+
+    def __init__(self, parent, controller):
+        self.controller = controller
+        tk.Frame.__init__(self, parent)
+        self.configure(bg='#4834DF')
+        label = tk.Label(self, text = 'Search Customer by Name', font=("Helvetica", 30, "italic"), bg='#4834DF').pack(padx=10)
 
 app = GymApp()
 app.mainloop()
