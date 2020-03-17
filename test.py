@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import messagebox
+from tkinter import messagebox, ttk
 import sqlite3
 
 conn = sqlite3.connect('rdxgyms.db')
@@ -19,8 +19,7 @@ class GymApp(tk.Tk):
 
         self.frames = {}
 
-        # for F in (Login, Menu, AddCustomer, AddPackage, ShowCustomers, ShowPackages, SearchCustomer, AddSubscription, AddPayment):
-        for F in (Login, Menu, AddCustomer, AddPackage, ShowCustomers, ShowPackages, SearchCustomer):
+        for F in (Login, Menu, AddCustomer, AddPackage, ShowCustomers, ShowPackages, SearchCustomer, AddSubscription, AddPayment):
 
             frame = F(container, self)
 
@@ -48,8 +47,10 @@ class Login(tk.Frame):
         e1 = tk.Entry(self, width = 50, textvariable = self.ev1, font=("Times", 20)).pack()
         password = tk.Label(self, text = 'Password', font=("Times", 24)).pack(pady=20)
         self.ev2 = tk.StringVar(value = 'Enter Password')
-        e2 = tk.Entry(self, width = 50, textvariable = self.ev2, font=("Times", 20)).pack()
-        b1 = tk.Button(self, text = 'Login', relief='raised', font=("Times", 18), width=10, command=self.authenticate).pack(pady=22)
+        e2 = tk.Entry(self, width = 50, textvariable = self.ev2, font=("Times", 20))
+        e2.pack()
+        e2.config(show="*")
+        b1 = tk.Button(self, text = 'Login', relief='raised', font=("Times", 18), width=10, command=self.authenticate).pack(pady=50)
 
     def authenticate(self):
         global conn
@@ -84,8 +85,8 @@ class Menu(tk.Frame):
         b3 = tk.Button(self, text = 'Show All Customers', relief='raised', font=("Times", 18), width=20, command=lambda: controller.show_frame(ShowCustomers)).pack(pady=4)
         b4 = tk.Button(self, text = 'Show All Packages', relief='raised', font=("Times", 18), width=20, command=lambda: controller.show_frame(ShowPackages)).pack(pady=4)
         b5 = tk.Button(self, text = 'Search Customer', relief='raised', font=("Times", 18), width=20, command=lambda: controller.show_frame(SearchCustomer)).pack(pady=4)
-        b6 = tk.Button(self, text = 'Add Subscription', relief='raised', font=("Times", 18), width=20, command=lambda: controller.show_frame(Menu)).pack(pady=4)
-        b7 = tk.Button(self, text = 'Add Payment', relief='raised', font=("Times", 18), width=20, command=lambda: controller.show_frame(Menu)).pack(pady=4)
+        b6 = tk.Button(self, text = 'Add Subscription', relief='raised', font=("Times", 18), width=20, command=lambda: controller.show_frame(AddSubscription)).pack(pady=4)
+        b7 = tk.Button(self, text = 'Add Payment', relief='raised', font=("Times", 18), width=20, command=lambda: controller.show_frame(AddPayment)).pack(pady=4)
 
 
 class AddCustomer(tk.Frame):
@@ -95,7 +96,7 @@ class AddCustomer(tk.Frame):
         tk.Frame.__init__(self, parent)
         self.configure(bg='#4834DF')
         label = tk.Label(self, text = 'Add Customer', font=("Helvetica", 30, "italic"), bg='#4834DF').pack(pady=10, padx=10)
-        self.custID = tk.IntVar(value = 'Enter Customer ID')
+        self.custID = tk.StringVar(value = 'Enter Customer ID')
         customerID = tk.Entry(self, width = 50, textvariable = self.custID, font=("Times", 20)).pack(pady=12)
         self.nameVar = tk.StringVar(value = 'Enter Customer Name')
         name = tk.Entry(self, width = 50, textvariable = self.nameVar, font=("Times", 20)).pack(pady=12)
@@ -111,12 +112,21 @@ class AddCustomer(tk.Frame):
     def addCustomer(self):
         global conn
         cur = conn.cursor()
-        rec = (self.custID.get(), self.nameVar.get(), self.phone.get(), self.date.get())
-        query = '''insert into customers values(?, ?, ?, ?)'''
-        cur.execute(query, rec)
-        conn.commit()
-        cur.close()
-        self.text.set("New Customer Added!!")
+        if not self.custID.get().isdigit():
+            return messagebox.showwarning('Add Customer', 'Please enter valid customer ID!')
+        elif self.nameVar.get() == '':
+            return messagebox.showwarning('Add Customer', "Don't leave name entry blank!")
+        elif len(self.phone.get()) != 10 or not self.phone.get().isdigit():
+            return messagebox.showwarning('Add Customer', "Please enter valid phone number!")
+        elif len(self.date.get()) != 11 or self.date.get().isdigit() or self.date.get().isalpha():
+            return messagebox.showwarning('Add Customer', 'Please enter valid date in this format DD-MMM-YYYY!')
+        else:
+            rec = (int(self.custID.get()), self.nameVar.get(), self.phone.get(), self.date.get())
+            query = '''insert into customers values(?, ?, ?, ?)'''
+            cur.execute(query, rec)
+            self.text.set("New Customer Added!!")
+            conn.commit()
+            cur.close()
 
 class AddPackage(tk.Frame):
 
@@ -125,7 +135,7 @@ class AddPackage(tk.Frame):
         tk.Frame.__init__(self, parent)
         self.configure(bg='#4834DF')
         label = tk.Label(self, text = 'Add Package', font=("Helvetica", 30, "italic"), bg='#4834DF').pack(pady=10, padx=10)
-        self.packID = tk.IntVar(value = 'Enter Package ID')
+        self.packID = tk.StringVar(value = 'Enter Package ID')
         packageID = tk.Entry(self, width = 50, textvariable = self.packID, font=("Times", 20)).pack(pady=12)
         self.typeVar = tk.StringVar(value = 'Enter Package Type')
         type = tk.Entry(self, width = 50, textvariable = self.typeVar, font=("Times", 20)).pack(pady=12)
@@ -141,12 +151,21 @@ class AddPackage(tk.Frame):
     def addPackage(self):
         global conn
         cur = conn.cursor()
-        rec = (self.packID.get(), self.typeVar.get(), self.facil.get(), self.costVar.get())
-        query = '''insert into packages values(?, ?, ?, ?)'''
-        cur.execute(query, rec)
-        conn.commit()
-        cur.close()
-        self.text.set("New Package Added!!")
+        if not self.packID.get().isdigit():
+            return messagebox.showwarning('Add Package', 'Please enter valid package ID!')
+        elif self.typeVar.get() == '':
+            return messagebox.showwarning('Add Package', "Don't leave type entry blank!")
+        elif self.facil.get() == '':
+            return messagebox.showwarning('Add Package', "Don't leave facilities entry blank!")
+        elif self.costVar.get() == '' or isinstance(self.costVar.get(), str):
+            return messagebox.showwarning('Add Package', 'Please enter valid cost!')
+        else:
+            rec = (int(self.packID.get()), self.typeVar.get(), self.facil.get(), self.costVar.get())
+            query = '''insert into packages values(?, ?, ?, ?)'''
+            cur.execute(query, rec)
+            self.text.set("New Package Added!!")
+            conn.commit()
+            cur.close()
 
 class ShowCustomers(tk.Frame):
 
@@ -215,6 +234,131 @@ class SearchCustomer(tk.Frame):
         tk.Frame.__init__(self, parent)
         self.configure(bg='#4834DF')
         label = tk.Label(self, text = 'Search Customer by Name', font=("Helvetica", 30, "italic"), bg='#4834DF').pack(padx=10)
+        self.custName = tk.StringVar(value = 'Enter Customer Name')
+        customerName = tk.Entry(self, width = 50, textvariable = self.custName, font=("Times", 20)).pack(pady=12)
+        list1 = tk.Listbox(self, height=5, width=160, font=("Times", 28), bd = 6, relief='raised', bg='#1BCA9B', fg='#2C3335')
+        list1.pack(padx=25, pady=8)
+        b1 = tk.Button(self, text = 'Search', relief='raised', font=("Times", 18), width=10, command=lambda: self.view_command(list1)).pack(pady=10)
+        b2 = tk.Button(self, text = 'Menu', relief='raised', font=("Times", 18), width=10, command=lambda: controller.show_frame(Menu)).pack(pady=10)
+
+    def searchCustomer(self):
+        global conn
+        cur = conn.cursor()
+        q1 = '''select * from customers where name = ?'''
+        cur.execute(q1, (self.custName.get(),))
+        r1 = cur.fetchall()
+        if len(r1) == 0:
+            return messagebox.showinfo("Search Customer", "Customer not found!")
+        elif len(r1) != 0:
+            q2 = '''select * from subscriptions where custName = ?'''
+            cur.execute(q2, (self.custName.get(),))
+            r2 = cur.fetchall()
+            if len(r2) == 0:
+                return messagebox.showinfo("Search Customer", "Customer Found but not subscribed to any package!")
+            else:
+                messagebox.showinfo("Search Customer", "Subscribed Customer Found!")
+                conn.commit()
+                cur.close()
+                return r2
+
+    def view_command(self, list1):
+        list1.delete(0,tk.END)
+        for row in self.searchCustomer():
+            list1.insert(tk.END,row)
+
+class AddSubscription(tk.Frame):
+
+    def __init__(self, parent, controller):
+        self.controller = controller
+        tk.Frame.__init__(self, parent)
+        self.configure(bg='#4834DF')
+        months = ['01 Month', '03 Months', '06 Months', '12 Months', '24 Months']
+        label = tk.Label(self, text = 'Add Subscription', font=("Helvetica", 30, "italic"), bg='#4834DF').pack(padx=10, pady=15)
+        self.subsID = tk.StringVar(value = 'Enter Subscription ID')
+        subscriptionID = tk.Entry(self, width = 50, textvariable = self.subsID, font=("Times", 20)).pack(pady=12)
+        self.custName = tk.StringVar(value = 'Enter Customer Name')
+        customerName = tk.Entry(self, width = 50, textvariable = self.custName, font=("Times", 20)).pack(pady=12)
+        self.packID = tk.StringVar(value = 'Enter Package ID')
+        packageID = tk.Entry(self, width = 50, textvariable = self.packID, font=("Times", 20)).pack(pady=12)
+        self.monthVar = tk.StringVar(value = 'Select No. of Months')
+        month = ttk.Combobox(self, width = 49, textvariable = self.monthVar, font=("Times", 20), values=months).pack(pady=18)
+        b1 = tk.Button(self, text = 'Submit', relief='raised', font=("Times", 18), width=10, command=self.addSubscription).pack(pady=8)
+        b2 = tk.Button(self, text = 'Menu', relief='raised', font=("Times", 18), width=10, command=lambda: controller.show_frame(Menu)).pack(pady=8)
+        self.text = tk.StringVar(value = '')
+        success = tk.Label(self, text = '', font=("Helvetica", 10, "italic"), bg='#4834DF', textvariable = self.text).pack(pady=6, padx=10)
+
+    def addSubscription(self):
+        global conn
+        cur = conn.cursor()
+        q1 = '''select * from customers where name = ?'''
+        cur.execute(q1, (self.custName.get(),))
+        r1 = cur.fetchall()
+        q2 = '''select * from packages where packageID = ?'''
+
+        if not self.subsID.get().isdigit():
+            return messagebox.showwarning('Add Subscription', 'Please enter valid subscription ID!')
+        elif len(r1) == 0:
+            return messagebox.showwarning('Add Subscription', 'Customer Not Found!')
+        elif not self.packID.get().isdigit():
+            return messagebox.showwarning('Add Subscription', 'Please enter valid package ID!')
+        elif self.monthVar.get() == 'Select No. of Months':
+            return messagebox.showwarning('Add Subscription', 'Please select a option from dropdown menu!')
+        else:
+            cur.execute(q2, (int(self.packID.get()),))
+            r2 = cur.fetchall()
+            if len(r2) == 0:
+                return messagebox.showwarning('Add Subscription', 'Package Not Found!')
+            rec = (int(self.subsID.get()), self.custName.get(), int(self.packID.get()), int(self.monthVar.get()[0:2]))
+            query = '''insert into subscriptions values(?, ?, ?, ?)'''
+            cur.execute(query, rec)
+            self.text.set("New Subscription Added!!")
+            conn.commit()
+            cur.close()
+
+class AddPayment(tk.Frame):
+
+    def __init__(self, parent, controller):
+        self.controller = controller
+        tk.Frame.__init__(self, parent)
+        self.configure(bg='#4834DF')
+        label = tk.Label(self, text = 'Add Payment', font=("Helvetica", 30, "italic"), bg='#4834DF').pack(padx=10, pady=15)
+        self.payID = tk.StringVar(value = 'Enter Payment ID')
+        paymentID = tk.Entry(self, width = 50, textvariable = self.payID, font=("Times", 20)).pack(pady=12)
+        self.custName = tk.StringVar(value = 'Enter Customer Name')
+        customerName = tk.Entry(self, width = 50, textvariable = self.custName, font=("Times", 20)).pack(pady=12)
+        self.invoice = tk.StringVar(value = '')
+        invoiceBill = tk.Label(self, text = '', font=("Helvetica", 20, "italic"), bg='#4834DF', textvariable = self.invoice).pack(pady=12, padx=10)
+        b1 = tk.Button(self, text = 'Submit', relief='raised', font=("Times", 18), width=10, command=self.addPayment).pack(pady=10)
+        b2 = tk.Button(self, text = 'Menu', relief='raised', font=("Times", 18), width=10, command=lambda: controller.show_frame(Menu)).pack(pady=10)
+        self.text = tk.StringVar(value = '')
+        success = tk.Label(self, text = '', font=("Helvetica", 10, "italic"), bg='#4834DF', textvariable = self.text).pack(pady=4, padx=16)
+
+    def addPayment(self):
+        global conn
+        cur = conn.cursor()
+        q1 = '''select * from customers where name = ?'''
+        cur.execute(q1, (self.custName.get(),))
+        r1 = cur.fetchall()
+        if not self.payID.get().isdigit():
+            return messagebox.showwarning('Add Payment', 'Please enter valid payment ID!')
+        elif len(r1) == 0:
+            return messagebox.showwarning('Add Payment', 'Customer Not Found!')
+        else:
+            q2 = '''select * from subscriptions where custName = ?'''
+            cur.execute(q2, (self.custName.get(),))
+            r2 = cur.fetchall()
+            if len(r2) == 0:
+                return messagebox.showwarning('Add Payment', 'Customer Found But Not Yet Subscribed To Any Packages!')
+            else:
+                q3 = '''select * from packages where packageID = ?'''
+                cur.execute(q3, (r2[0][2],))
+                r3 = cur.fetchall()
+                bill = r2[0][3] * r3[0][3]
+                self.text.set("New Payment Added!!")
+                conn.commit()
+                cur.close()
+                return self.invoice.set('Payment ID : {}\nCustomer Name : {}\nBill Amount : ₹ {}'.format(int(self.payID.get()), self.custName.get(), bill))
+
 
 app = GymApp()
 app.mainloop()
