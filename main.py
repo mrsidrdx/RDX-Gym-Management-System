@@ -141,7 +141,7 @@ class AddPackage(tk.Frame):
         type = tk.Entry(self, width = 50, textvariable = self.typeVar, font=("Times", 20)).pack(pady=12)
         self.facil = tk.StringVar(value = 'Enter Package Facilities')
         facilities = tk.Entry(self, width = 50, textvariable = self.facil, font=("Times", 20)).pack(pady=12)
-        self.costVar = tk.IntVar(value = 'Enter Cost of Package')
+        self.costVar = tk.StringVar(value = 'Enter Cost of Package')
         cost = tk.Entry(self, width = 50, textvariable = self.costVar, font=("Times", 20)).pack(pady=12)
         b1 = tk.Button(self, text = 'Submit', relief='raised', font=("Times", 18), width=10, command=self.addPackage).pack(pady=12)
         b2 = tk.Button(self, text = 'Menu', relief='raised', font=("Times", 18), width=10, command=lambda: controller.show_frame(Menu)).pack(pady=12)
@@ -157,10 +157,10 @@ class AddPackage(tk.Frame):
             return messagebox.showwarning('Add Package', "Don't leave type entry blank!")
         elif self.facil.get() == '':
             return messagebox.showwarning('Add Package', "Don't leave facilities entry blank!")
-        elif self.costVar.get() == '' or isinstance(self.costVar.get(), str):
+        elif not self.costVar.get().isdigit():
             return messagebox.showwarning('Add Package', 'Please enter valid cost!')
         else:
-            rec = (int(self.packID.get()), self.typeVar.get(), self.facil.get(), self.costVar.get())
+            rec = (int(self.packID.get()), self.typeVar.get(), self.facil.get(), int(self.costVar.get()))
             query = '''insert into packages values(?, ?, ?, ?)'''
             cur.execute(query, rec)
             self.text.set("New Package Added!!")
