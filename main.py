@@ -9,7 +9,7 @@ class GymApp(tk.Tk):
         tk.Tk.__init__(self, *args, **kwargs)
         self.title('RDX Gym Management')
         self.configure(bg='#4834DF')
-        self.geometry('825x550')
+        self.geometry('850x625')
         l1 = tk.Label(self, text = 'Welcome to RDX Gym Centers', font=("Courier", 28, "bold"), bg='#4834DF').pack()
         container = tk.Frame(self, bg='#EAF0F1')
         container.pack(side="top", fill="both", expand = True, pady=10)
@@ -78,7 +78,7 @@ class Menu(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.configure(bg='#4834DF')
-        label = tk.Label(self, text = 'Start Menu', font=("Helvetica", 30, "italic"), bg='#4834DF').pack(pady=2, padx=10)
+        label = tk.Label(self, text = 'Start Menu', font=("Helvetica", 30, "italic"), bg='#4834DF').pack(pady=24, padx=10)
         b1 = tk.Button(self, text = 'Add Customer', relief='raised', font=("Times", 18), width=20, command=lambda: controller.show_frame(AddCustomer)).pack(pady=4)
         b2 = tk.Button(self, text = 'Add Package', relief='raised', font=("Times", 18), width=20, command=lambda: controller.show_frame(AddPackage)).pack(pady=4)
         b3 = tk.Button(self, text = 'Show All Customers', relief='raised', font=("Times", 18), width=20, command=lambda: controller.show_frame(ShowCustomers)).pack(pady=4)
@@ -121,6 +121,12 @@ class AddCustomer(tk.Frame):
             return messagebox.showwarning('Add Customer', 'Please enter valid date in this format DD-MMM-YYYY!')
         else:
             rec = (int(self.custID.get()), self.nameVar.get(), self.phone.get(), self.date.get())
+            q1 = '''select customerID from customers'''
+            cur.execute(q1)
+            r = cur.fetchall()
+            for row in r:
+                if row[0] == int(self.custID.get()):
+                    return messagebox.showwarning('Add Customer', 'Customer ID already exists!')
             query = '''insert into customers values(?, ?, ?, ?)'''
             cur.execute(query, rec)
             self.text.set("New Customer Added!!")
@@ -160,6 +166,12 @@ class AddPackage(tk.Frame):
             return messagebox.showwarning('Add Package', 'Please enter valid cost!')
         else:
             rec = (int(self.packID.get()), self.typeVar.get(), self.facil.get(), int(self.costVar.get()))
+            q1 = '''select packageID from packages'''
+            cur.execute(q1)
+            r = cur.fetchall()
+            for row in r:
+                if row[0] == int(self.packID.get()):
+                    return messagebox.showwarning('Add Package', 'Package ID already exists!')
             query = '''insert into packages values(?, ?, ?, ?)'''
             cur.execute(query, rec)
             self.text.set("New Package Added!!")
@@ -174,17 +186,21 @@ class ShowCustomers(tk.Frame):
         self.configure(bg='#4834DF')
         label = tk.Label(self, text = 'List of Customers', font=("Helvetica", 30, "italic"), bg='#4834DF').pack(padx=10)
 
-        list1 = tk.Listbox(self, height=8, width=160, font=("Times", 28), bd = 6, relief='raised', bg='#1BCA9B', fg='#2C3335')
-        list1.pack(padx=25, pady=8)
-        b2 = tk.Button(self, text = 'Menu', relief='raised', font=("Times", 18), width=10, command=lambda: controller.show_frame(Menu)).pack(pady=8)
+        list1 = tk.Listbox(self, height=8, width=160, selectmode='multiple', font=("Times", 28), bd = 6, relief='raised', bg='#1BCA9B', fg='#2C3335')
+        list1.pack(padx=25, pady=16)
+        b2 = tk.Button(self, text = 'Menu', relief='raised', font=("Times", 18), width=10, command=lambda: controller.show_frame(Menu)).pack()
+        b3 = tk.Button(self, text = 'Delete', relief='raised', font=("Times", 18), width=10, command=lambda:self.deleteCustomers(list1)).pack(pady=8)
         self.view_command(list1)
 
     def showCustomers(self):
         global conn
+        conn = sqlite3.connect('rdxgyms.db')
         cur = conn.cursor()
         query = '''select * from customers'''
         cur.execute(query)
         r = cur.fetchall()
+        conn.commit()
+        cur.close()
         count = len(r)
         if count > 0:
             return r
@@ -196,6 +212,22 @@ class ShowCustomers(tk.Frame):
         for row in self.showCustomers():
             list1.insert(tk.END,row)
 
+    def deleteCustomers(self, list1):
+        sel = list1.curselection()
+        cur = conn.cursor()
+        q1 = '''select * from customers'''
+        cur.execute(q1)
+        r = cur.fetchall()
+        query = '''delete from customers where customerID = ?'''
+        if len(sel) == 0:
+            return messagebox.showwarning('Delete Customer', 'No customer is selected!')
+        for i in range(len(sel)):
+            cur.execute(query, (r[sel[i]][0],))
+        conn.commit()
+        cur.close()
+        for index in sel[::-1]:
+            list1.delete(index)
+
 class ShowPackages(tk.Frame):
 
     def __init__(self, parent, controller):
@@ -204,13 +236,15 @@ class ShowPackages(tk.Frame):
         self.configure(bg='#4834DF')
         label = tk.Label(self, text = 'List of Packages', font=("Helvetica", 30, "italic"), bg='#4834DF').pack(padx=10)
 
-        list1 = tk.Listbox(self, height=8, width=160, font=("Times", 28), bd = 6, relief='raised', bg='#1BCA9B', fg='#2C3335')
-        list1.pack(padx=25, pady=8)
-        b2 = tk.Button(self, text = 'Menu', relief='raised', font=("Times", 18), width=10, command=lambda: controller.show_frame(Menu)).pack(pady=8)
+        list1 = tk.Listbox(self, height=8, width=160, selectmode='multiple', font=("Times", 28), bd = 6, relief='raised', bg='#1BCA9B', fg='#2C3335')
+        list1.pack(padx=25, pady=16)
+        b2 = tk.Button(self, text = 'Menu', relief='raised', font=("Times", 18), width=10, command=lambda: controller.show_frame(Menu)).pack()
+        b3 = tk.Button(self, text = 'Delete', relief='raised', font=("Times", 18), width=10, command=lambda:self.deletePackages(list1)).pack(pady=8)
         self.view_command(list1)
 
     def showPackages(self):
         global conn
+        conn = sqlite3.connect('rdxgyms.db')
         cur = conn.cursor()
         query = '''select * from packages'''
         cur.execute(query)
@@ -225,6 +259,22 @@ class ShowPackages(tk.Frame):
         list1.delete(0,tk.END)
         for row in self.showPackages():
             list1.insert(tk.END,row)
+
+    def deletePackages(self, list1):
+        sel = list1.curselection()
+        cur = conn.cursor()
+        q1 = '''select * from packages'''
+        cur.execute(q1)
+        r = cur.fetchall()
+        query = '''delete from packages where packageID = ?'''
+        if len(sel) == 0:
+            return messagebox.showwarning('Delete Package', 'No package is selected!')
+        for i in range(len(sel)):
+            cur.execute(query, (r[sel[i]][0],))
+        conn.commit()
+        cur.close()
+        for index in sel[::-1]:
+            list1.delete(index)
 
 class SearchCustomer(tk.Frame):
 
@@ -305,6 +355,12 @@ class AddSubscription(tk.Frame):
         else:
             cur.execute(q2, (int(self.packID.get()),))
             r2 = cur.fetchall()
+            q1 = '''select subsID from subscriptions'''
+            cur.execute(q1)
+            r = cur.fetchall()
+            for row in r:
+                if row[0] == int(self.subsID.get()):
+                    return messagebox.showwarning('Add Subscription', 'Subscription ID already exists!')
             if len(r2) == 0:
                 return messagebox.showwarning('Add Subscription', 'Package Not Found!')
             rec = (int(self.subsID.get()), self.custName.get(), int(self.packID.get()), int(self.monthVar.get()[0:2]))
@@ -349,6 +405,12 @@ class AddPayment(tk.Frame):
             if len(r2) == 0:
                 return messagebox.showwarning('Add Payment', 'Customer Found But Not Yet Subscribed To Any Packages!')
             else:
+                q1 = '''select paymentID from payments'''
+                cur.execute(q1)
+                r = cur.fetchall()
+                for row in r:
+                    if row[0] == int(self.payID.get()):
+                        return messagebox.showwarning('Add Payment', 'Payment ID already exists!')
                 q3 = '''select * from packages where packageID = ?'''
                 cur.execute(q3, (r2[0][2],))
                 r3 = cur.fetchall()
