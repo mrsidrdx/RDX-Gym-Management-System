@@ -4,8 +4,11 @@ import sqlite3
 
 conn = sqlite3.connect('rdxgyms.db')
 
+showPack, showCust = False, False
+container = ''
 class GymApp(tk.Tk):
     def __init__(self, *args, **kwargs):
+        global container
         tk.Tk.__init__(self, *args, **kwargs)
         self.title('RDX Gym Management')
         self.configure(bg='#4834DF')
@@ -21,16 +24,50 @@ class GymApp(tk.Tk):
 
         for F in (Login, Menu, AddCustomer, AddPackage, ShowCustomers, ShowPackages, SearchCustomer, AddSubscription, AddPayment):
 
-            frame = F(container, self)
-
-            self.frames[F] = frame
-
-            frame.grid(row=0, column=0, sticky="nsew")
+            print(F)
+            f = str(F)
+            if f == "<class '__main__.ShowPackages'>" or f == "<class '__main__.ShowCustomers'>":
+                if showPack or showCust:
+                    print('Inside ShowPack')
+                    frame = F(container, self)
+                    print(frame)
+                    self.frames[F] = frame
+                    frame.grid(row=0, column=0, sticky="nsew")
+                else:
+                    print('Outside ShowPack')
+            else:
+                frame = F(container, self)
+                print(frame)
+                self.frames[F] = frame
+                frame.grid(row=0, column=0, sticky="nsew")
 
         self.show_frame(Login)
 
-    def show_frame(self, cont):
+    def show_pack(self):
+        print('Inside ShowPack')
+        frame = ShowPackages(container, self)
+        print(frame)
+        self.frames[ShowPackages] = frame
+        frame.grid(row=0, column=0, sticky="nsew")
 
+    def show_cust(self):
+        print('Inside ShowCust')
+        frame = ShowCustomers(container, self)
+        print(frame)
+        self.frames[ShowCustomers] = frame
+        frame.grid(row=0, column=0, sticky="nsew")
+
+    def show_frame(self, cont):
+        global showPack
+        cont1 = str(cont)
+        if cont1 == "<class '__main__.ShowPackages'>":
+            showPack = True
+            print(showPack)
+            self.show_pack()
+        elif cont1 == "<class '__main__.ShowCustomers'>":
+            showCust = True
+            print(showCust)
+            self.show_cust()
         frame = self.frames[cont]
         frame.tkraise()
 
@@ -192,6 +229,9 @@ class ShowCustomers(tk.Frame):
         b3 = tk.Button(self, text = 'Delete', relief='raised', font=("Times", 18), width=10, command=lambda:self.deleteCustomers(list1)).pack(pady=8)
         self.view_command(list1)
 
+    def __str__(self):
+        return 'ShowCustomers'
+
     def showCustomers(self):
         global conn
         conn = sqlite3.connect('rdxgyms.db')
@@ -199,6 +239,7 @@ class ShowCustomers(tk.Frame):
         query = '''select * from customers'''
         cur.execute(query)
         r = cur.fetchall()
+        print(r)
         conn.commit()
         cur.close()
         count = len(r)
@@ -242,6 +283,9 @@ class ShowPackages(tk.Frame):
         b3 = tk.Button(self, text = 'Delete', relief='raised', font=("Times", 18), width=10, command=lambda:self.deletePackages(list1)).pack(pady=8)
         self.view_command(list1)
 
+    def __str__(self):
+        return 'ShowPackages'
+
     def showPackages(self):
         global conn
         conn = sqlite3.connect('rdxgyms.db')
@@ -249,6 +293,7 @@ class ShowPackages(tk.Frame):
         query = '''select * from packages'''
         cur.execute(query)
         r = cur.fetchall()
+        print(r)
         count = len(r)
         if count > 0:
             return r
